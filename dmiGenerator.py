@@ -3,6 +3,8 @@
 
 """
 Generate from a given secuence of genes (or a random sequence) all potential DMIs
+
+This version generates thousands of genes
 """
 
 import argparse
