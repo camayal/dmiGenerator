@@ -10,98 +10,62 @@ The idea is produce a list of dmis in the following format:
 
 0/1:2/1-1/1:2/0-0/1:2/1 == AB-Bc-AC
 
-
-
 """
 
 import argparse
-import random
+import numpy as np
 
 #get some arguments
 parser = argparse.ArgumentParser(description="Script find the potential DMIs given a sequence of loci")
-parser.add_argument("-v", "--verbose", dest="verbose", help="Show all information", action="store_true")
-parser.add_argument("-g", "--graphical", dest="graphical", help="Show a graphical output", action="store_true")
 parser.add_argument("-n", "--number",  metavar='N', type=int, default=3, dest="number", help="Generate a random sequence of N genes")
-parser.add_argument("input", metavar="AbCDe", nargs='?', type=str, help="Genotype of lineage 1")
-parser.add_argument("-s", "--string", metavar="\",\"", dest="string", help="Return as a string using a separator")
-parser.add_argument("-t", "--stats", dest="stats", help="Output only stats: genes, dmis, ddis, adis, orrEstimate", action="store_true")
+parser.add_argument("-s", "--seed", dest="seed", metavar='N', type=int, help="Seed")
+parser.add_argument("-l", "--letters", dest="letters", help="Return in DMIs as letters (A-Z)", action="store_true")
 
 #put them into args
 args = parser.parse_args()
 
+#create rng generator
+rng = np.random.default_rng(args.seed)
 
-##Experimental
-#alphabets (pay attention A != Α != А, in latin, greek and russian)
-#Latin (26): ABCDEFGHIJKLMNOPQRSTUVWXYZ // abcdefghijklmnopqrstuvwxyz
-#Greek (24): ΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩϴ // αβγδεζηθικλμνξοπρστυφχψωθ
-#Russian (31): АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ // абвгдежзиклмнопрстуфхцчшщъыьэюя
-##Danger zone (some versions of Unicode can lack of those)
-#Georgian (38): ԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖ // աբգդեզէըթժիլխծկհձղճմյնշոչպջռսվտրցւփքօֆ
-#Georgian (40): ႠႡႢႣႤႥႦჁႧႨႩႪႫႬჂႭႮႯႰႱႲჃႳჇႴႵႶႷႸႹႺႻႼႽႾჄႿჀჅჍ // ⴀⴁⴂⴃⴄⴅⴆⴡⴇⴈⴉⴊⴋⴌⴢⴍⴎⴏⴐⴑⴒⴣⴓⴧⴔⴕⴖⴗⴘⴙⴚⴛⴜⴝⴞⴤⴟⴠⴥⴭ
-#Coptic (33): ⲀⲂⲄⲆⲈⲊⲌⲎⲐⲒⲔⲖⲘⲚⲜⲞⲠϤⲢⲤⲦⲨⲪⲬⲮⲰⳀϢϦϨϪϬϮ // ⲁⲃⲅⲇⲉⲋⲍⲏⲑⲓⲕⲗⲙⲛⲝⲟⲡϥⲣⲥⲧⲩⲫⲭⲯⲱⳁϣϧϩϫϭϯ
+# for thousands only use random generator
+lineage1_new = []
 
-
-#in case use -n generate a random sequence
-if args.input is None:
-    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZΑΒΓΔΕΖΗΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩϴАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯԱԲԳԴԵԶԷԸԹԺԻԼԽԾԿՀՁՂՃՄՅՆՇՈՉՊՋՌՍՎՏՐՑՒՓՔՕՖႠႡႢႣႤႥႦჁႧႨႩႪႫႬჂႭႮႯႰႱႲჃႳჇႴႵႶႷႸႹႺႻႼႽႾჄႿჀჅჍⲀⲂⲄⲆⲈⲊⲌⲎⲐⲒⲔⲖⲘⲚⲜⲞⲠϤⲢⲤⲦⲨⲪⲬⲮⲰⳀϢϦϨϪϬϮ"
-    lineage1 = ""
-
-    lineage1_new = []
-
-
-    #loop for every asked gene
-    for i in range(args.number):
-        #define if current gene is ancestral (true) or derived (false)
-        if random.choice([True, False]):
-            lineage1 += alphabet[i].lower()
-            lineage1_new.append(f"{i}/0")
-        else:
-            lineage1 += alphabet[i].upper()
-            lineage1_new.append(f"{i}/1")
-        
-        # reorder each gene, to avoid 1 is always first
-        lineage1 = ''.join(random.sample(lineage1,len(lineage1)))
-        
-else:
-    lineage1 = args.input
-    
-
+#loop for every asked gene
+for i in range(args.number):
+    #define if current gene is ancestral (true) or derived (false)
+    if rng.choice([True, False]):
+        lineage1_new.append(f"{i}/0")
+    else:
+        lineage1_new.append(f"{i}/1")
 
 # reorder each gene, to avoid 1 is always first 
-random.shuffle(lineage1_new)
+rng.shuffle(lineage1_new)
 
 
-# create the hypotetical lineage 2 as a oposite mirror of lineage 1
-lineage2 = lineage1.swapcase()  #create the lineage 2 secuence (complement of lineage 1)
+### Some functions 
 
-lineage2_new = []
-for i in lineage1_new:
-    _gene, _state =  i.split("/")
-    _opposite_state = 1 - int(_state)
-    lineage2_new.append(f"{_gene}/{_opposite_state}")
+def _get_gene_state(gene_state):
+    """Function for controling splits in one place"""
+    return gene_state.split("/")
 
 
-
-dmis = []
-dmiInfo = {}
-ancestraInDMIInfo = []
-miCount = 0
-diCount = 0
-
-##
-dmis_new = []
-dmiInfo_new = {}
-ancestraInDMIInfo_new = []
-miCount_new = 0
-diCount_new = 0
+def _isderived(gene):
+    """Replace of isupper check in thousands versions
+    This verify if the given gene is derived or not.
+    """    
+    _gene, _state = gene.split("/")
+    return _state == "1"
 
 
-#for both lineages reconstruct the history, slicing from 0 to current index and from index + 1 to end, this last
-#part in lowercase to create the non-mutate time
-#ABc > 1st slice: A, 2nd: AB, 3rd: ABc.  In the other slicing process, 1stB: Bc (lowercase)> bc, 2ndB: c, 3rdB: ""
-#After that join with "" 1st, 1stB, 2st, 2stB, ...  Same for both lineages
-lineage1_history = ["".join([lineage1[:index + 1], lineage1[index + 1:].lower()]) for index, gene in enumerate(lineage1)]
-lineage2_history = ["".join([lineage2[:index + 1], lineage2[index + 1:].lower()]) for index, gene in enumerate(lineage2)]
+def _convert_numbers_to_letters(gene):
+    """Convert gene in number format to letters (A-Z) being lower case ancestral
+    """
+    gene, state = _get_gene_state(gene)
+    if int(gene) <= 25:
+        letter = chr(65 + int(gene))
+        if state == "0":
+            letter = letter.lower() 
+        return letter
 
 
 def reconstruct_lineage_history(lineage):
@@ -120,7 +84,7 @@ def reconstruct_lineage_history(lineage):
         # the rest of genes (in this case decreasing one by one), are change to
         # the anscestral state
         for _genestate in lineage[index + 1:]:
-            _gene, _state = _genestate.split("/")
+            _gene, _state = _get_gene_state(_genestate)
             slice.append(f"{_gene}/0")
         
         # append every slice 
@@ -128,165 +92,75 @@ def reconstruct_lineage_history(lineage):
 
     return lineage_new_history
 
+# create the hypotetical lineage 2 as a oposite mirror of lineage 1
+lineage2_new = []
+for i in lineage1_new:
+    _gene, _state =  _get_gene_state(i)
+    _opposite_state = 1 - int(_state)
+    lineage2_new.append(f"{_gene}/{_opposite_state}")
+
+
+
 # get histories for each lineagef
 lineage1_new_history = reconstruct_lineage_history(lineage1_new)
 lineage2_new_history = reconstruct_lineage_history(lineage2_new)
 
 
+dmis_new = []
 
+
+# print(f"{lineage1_new_history=}")
+# print(f"{lineage2_new_history=}")
+
+
+
+##thousands version
 #do a loop in the first lineage history, saving the index.
 #do a loop in the first genotype, in the first letter, check if have or not a mutation
     #if has the mutation iterate with all genes in lineage 2 in that time (or index)
     #if does not have a mutation move to the lineage 2 and does the iteration with all genes in lineage 1
 #while is getting all possible combination, do the evauation, if Aa noDMI, if pair is in the genotype is not a DMI.
 #But when the pair is not in the genotype is a potential DMI
-for index,genotype_l1 in enumerate(lineage1_history):
-    if genotype_l1[index].isupper():
-        for gene_l1 in genotype_l1[index]:
-            for comparison in lineage2_history[index]:
-                pair = gene_l1 + comparison
-                #check if the pair is in the genotype of lineage 1 (using a loop to avoid non continuous false negative, Ac is in ABc)
-                #also avoid same gene comparing both in lowercase
-                if sum([c in pair for c in genotype_l1]) < len(pair) and gene_l1.lower() != comparison.lower():
-                    dmis.append(pair) #add dmi to list
-                    #store some information about this dmi
-                    dmiInfo.setdefault(gene_l1, {})
-                    dmiInfo[gene_l1].setdefault("index", index)
-                    dmiInfo[gene_l1].setdefault("comparison", []).append(comparison)
-                    ancestraInDMIInfo.append(comparison + str(index))
-
-
+for index, genotype_l1_new in enumerate(lineage1_new_history):
+    # print(f"{genotype_l1_new=}")
+    # print(f"{genotype_l1_new[index]=}")
+    gene_l1_new = genotype_l1_new[index]
+    if _isderived(gene_l1_new):
+        # print(f"{genotype_l1_new[index]=}")
+        for comparison_new in lineage2_new_history[index]:
+            # print(f"{comparison_new=}")
+            pair_new = [gene_l1_new, comparison_new]
+            # print(f"{pair_new=}")
+            # print([c in pair_new for c in genotype_l1_new], pair_new, genotype_l1_new)
+            if sum([c in pair_new for c in genotype_l1_new]) < len(pair_new) and _get_gene_state(gene_l1_new)[0] != _get_gene_state(comparison_new)[0]:
+                dmis_new.append(pair_new)
     else:
-        for gene_l2 in lineage2_history[index][index]:
-            if gene_l2.isupper():
-                for comparison in genotype_l1:
-                    pair = gene_l2 + comparison
-                    #check if the pair is in the genotype of lineage 2 (using a loop to avoid non continuous false negative, Ac is in ABc)
-                    #also avoid same gene comparing both in lowercase
-                    if sum([c in pair for c in lineage2_history[index]]) < len(pair) and gene_l2.lower() != comparison.lower():
-                        dmis.append(pair)#add dmi to list
-                        #store some information about this dmi
-                        dmiInfo.setdefault(gene_l2, {})
-                        dmiInfo[gene_l2].setdefault("index", index)
-                        dmiInfo[gene_l2].setdefault("comparison", []).append(comparison)
-                        ancestraInDMIInfo.append(comparison + str(index))
+        gene_l2_new = lineage2_new_history[index][index]
+        # print(f"{gene_l2_new=}")
+        if _isderived(gene_l2_new):
+            for comparison_new in genotype_l1_new:
+                pair_new = [gene_l2_new, comparison_new]
+                if sum([c in pair_new for c in lineage2_new_history[index]]) < len(pair_new) and _get_gene_state(gene_l2_new)[0] != _get_gene_state(comparison_new)[0]:
+                    dmis_new.append(pair_new)
 
 
-
-#thousands version
-#do a loop in the first lineage history, saving the index.
-#do a loop in the first genotype, in the first letter, check if have or not a mutation
-    #if has the mutation iterate with all genes in lineage 2 in that time (or index)
-    #if does not have a mutation move to the lineage 2 and does the iteration with all genes in lineage 1
-#while is getting all possible combination, do the evauation, if Aa noDMI, if pair is in the genotype is not a DMI.
-#But when the pair is not in the genotype is a potential DMI
-for index,genotype_l1 in enumerate(lineage1_history):
-    if genotype_l1[index].isupper():
-        for gene_l1 in genotype_l1[index]:
-            for comparison in lineage2_history[index]:
-                pair = gene_l1 + comparison
-                #check if the pair is in the genotype of lineage 1 (using a loop to avoid non continuous false negative, Ac is in ABc)
-                #also avoid same gene comparing both in lowercase
-                if sum([c in pair for c in genotype_l1]) < len(pair) and gene_l1.lower() != comparison.lower():
-                    dmis.append(pair) #add dmi to list
-                    #store some information about this dmi
-                    dmiInfo.setdefault(gene_l1, {})
-                    dmiInfo[gene_l1].setdefault("index", index)
-                    dmiInfo[gene_l1].setdefault("comparison", []).append(comparison)
-                    ancestraInDMIInfo.append(comparison + str(index))
-
-
+# output
+#convert number notation to letters
+formated_output = []
+if args.letters:
+    if args.number <= 26:        
+        for d in dmis_new:
+            formated_dmi = ""
+            for g in d:
+                formated_dmi += _convert_numbers_to_letters(g)     
+            formated_output.append(formated_dmi)   
+        print("-".join(formated_output))
     else:
-        for gene_l2 in lineage2_history[index][index]:
-            if gene_l2.isupper():
-                for comparison in genotype_l1:
-                    pair = gene_l2 + comparison
-                    #check if the pair is in the genotype of lineage 2 (using a loop to avoid non continuous false negative, Ac is in ABc)
-                    #also avoid same gene comparing both in lowercase
-                    if sum([c in pair for c in lineage2_history[index]]) < len(pair) and gene_l2.lower() != comparison.lower():
-                        dmis.append(pair)#add dmi to list
-                        #store some information about this dmi
-                        dmiInfo.setdefault(gene_l2, {})
-                        dmiInfo[gene_l2].setdefault("index", index)
-                        dmiInfo[gene_l2].setdefault("comparison", []).append(comparison)
-                        ancestraInDMIInfo.append(comparison + str(index))
-
-
-                    
-#print some extra information if verbose is activated        
-if args.verbose:
-    K = len(lineage1) 
-    print ("Number of genes: " + str(K))
-    print ("Original input (final genotype for lineage 1): " + lineage1)
-    print ("Final genotype for lineage 2): " + lineage2)
-    print ("Mutation per time in lineage 1: " + str(lineage1_history))
-    print ("Mutation per time in lineage 2: " + str(lineage2_history))
-    for index in range(len(dmis)):
-        if str(dmis[index][0]).islower() or str(dmis[index][1]).islower():
-            miCount += 1
-        else:
-            diCount += 1
-    print ("Number of DMIs pairs: " + str(len(dmis)) + " (DI: "+ str(diCount) + ", MI: " + str(miCount) + ")" )
-    print ("Orr`s DMIs expection (K(K-1)/2): " + str(int(K * (K - 1) / 2)))
-    print ("\nPair of genes with potential DMI: " if len(dmis) > 0 else "No DMIs found!")
-
-
-#print final result
-if not args.stats:
-    if len(dmis) > 0:
-        if args.string:
-            print (args.string.join(dmis))
-        else:
-            print (dmis)
-
-
-
-
-
-
-# print dmiInfo
-# print ancestraInDMIInfo
-
-
-#graphical view
-if args.graphical:
-    # print ("\nGraphical output")
-    for i in range(len(lineage1_history)):
-        for j in range(len(lineage1_history)):
-            # print "|" + lineage1_history[j][i] + "    " + lineage2_history[j][i] + "| ",
-           
-            #print in colors the table
-            if lineage1_history[j][i] in dmiInfo and dmiInfo[lineage1_history[j][i]]["index"] == j or lineage1_history[j][i] + str(j) in ancestraInDMIInfo:
-                l1ini = '\x1b[91m'
-                l1end = '\x1b[0m'
-            else:
-                l1ini = ''
-                l1end = '' 
-            if lineage2_history[j][i] in dmiInfo and dmiInfo[lineage2_history[j][i]]["index"] == j or lineage2_history[j][i] + str(j) in ancestraInDMIInfo:
-                l2ini = '\x1b[91m'
-                l2end = '\x1b[0m'
-            else:
-                l2ini = ''
-                l2end = ''
-            print ("|" + l1ini + lineage1_history[j][i] + l1end + "    " +l2ini+ lineage2_history[j][i] + l2end + "| ", end='')           
-
-
-
-        print ("")
-
-
-#Only print tab delimited output with results 
-if args.stats:
-    K = len(lineage1) 
-    for index in range(len(dmis)):
-        if str(dmis[index][0]).islower() or str(dmis[index][1]).islower():
-            miCount += 1
-        else:
-            diCount += 1
-    print(K, len(dmis), diCount, miCount, K * (K - 1) / 2, sep='\t') 
-
-
-
+        print("There are only 26 letters in the roman alphabet. Reduce the number of genes to maximum 26")
+else:
+    for d in dmis_new:
+        formated_output.append(":".join(d))   
+    print("-".join(formated_output))
 
 
 
